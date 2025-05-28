@@ -1,0 +1,31 @@
+Metadata-Version: 2.1
+Name: selenium-captcha-solver
+Version: 0.0.4
+Summary: Selenium captcha solver
+Home-page: https://github.com/KofeinTech/selenium-captcha
+Author: Improvs Tech
+Author-email: improvs.tech@gmail.com
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# Selenium Captcha Solver
+Usage example:
+
+```
+from scs.captcha import CaptchaSolver
+
+driver.get('page with captcha')
+captcha_solver = CaptchaSolver(
+    driver='selenium driver', 
+    google_service_account_credentials='your credentials', 
+    google_project_id='your google project id'
+)
+captcha_solver.solve()
+```
+
+
