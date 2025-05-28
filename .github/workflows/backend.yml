@@ -3,10 +3,12 @@ name: Backend CI
 on:
   push:
     paths:
-      - 'backend/**'
+      - 'smartclips-main/backend/**'
       - 'docker-compose.yml'
   pull_request:
-
+    paths:
+      - 'smartclips-main/backend/**'
+      - 'docker-compose.yml'
 jobs:
   build-backend:
     runs-on: ubuntu-latest
