@@ -1,5 +1,4 @@
 name: Backend CI
-
 on:
   push:
     paths:
@@ -9,27 +8,25 @@ on:
     paths:
       - 'smartclips-main/backend/**'
       - 'docker-compose.yml'
+  workflow_dispatch:  # Enables manual trigger from Actions tab
 jobs:
   build-backend:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./backend
-
+        working-directory: ./smartclips-main/backend  # Fixed to match your folder structure
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
-
+          cache: 'npm'  # Cache npm dependencies for faster builds
+          cache-dependency-path: './smartclips-main/backend/package-lock.json'
       - name: Install Backend Dependencies
         run: npm ci
-
       - name: Run Backend Linter
         run: npm run lint
-
       - name: Run Backend Tests
         run: npm test
