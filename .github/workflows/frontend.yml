@@ -1,0 +1,37 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - '**.ts'
+      - '**.html'
+      - 'tailwind.config.ts'
+      - 'vite.config.ts'
+      - 'src/**'
+      - 'public/**'
+  pull_request:
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+
+      - name: Run Linter
+        run: npm run lint

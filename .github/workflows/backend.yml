@@ -1,0 +1,33 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+  pull_request:
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Backend Dependencies
+        run: npm ci
+
+      - name: Run Backend Linter
+        run: npm run lint
+
+      - name: Run Backend Tests
+        run: npm test
