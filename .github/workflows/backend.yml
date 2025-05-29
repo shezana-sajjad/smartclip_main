@@ -1,32 +1,74 @@
 name: Backend CI
+
 on:
   push:
+    branches: [main, develop, 'feature/*', 'hotfix/*']
     paths:
       - 'smartclips-main/backend/**'
-      - 'docker-compose.yml'
+      - '.github/workflows/backend-ci.yml'
   pull_request:
+    branches: [main, develop]
     paths:
       - 'smartclips-main/backend/**'
-      - 'docker-compose.yml'
-  workflow_dispatch:  # Enables manual trigger from Actions tab
+  workflow_dispatch:
+
 jobs:
-  build-backend:
+  backend-build-test:
     runs-on: ubuntu-latest
+    
     defaults:
       run:
-        working-directory: ./smartclips-main/backend  # Fixed to match your folder structure
+        working-directory: ./smartclips-main/backend
+    
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'npm'  # Cache npm dependencies for faster builds
-          cache-dependency-path: './smartclips-main/backend/package-lock.json'
-      - name: Install Backend Dependencies
-        run: npm ci
-      - name: Run Backend Linter
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: 'smartclips-main/backend/package-lock.json'
+      
+      - name: Verify Project Structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in backend directory:"
+          ls -la
+          echo "Package.json exists: $(test -f package.json && echo 'Yes' || echo 'No')"
+      
+      - name: Clean npm cache
+        run: npm cache clean --force
+      
+      - name: Install Dependencies
+        run: npm ci --no-optional --no-fund
+      
+      - name: Run Linter
         run: npm run lint
-      - name: Run Backend Tests
+        continue-on-error: false
+      
+      - name: Run Tests
         run: npm test
+        env:
+          NODE_ENV: test
+      
+      - name: Build Application
+        run: npm run build
+        if: success()
+      
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-test-coverage
+          path: smartclips-main/backend/coverage/
+          retention-days: 7
+      
+      - name: Success Notification
+        if: success()
+        run: echo "✅ Backend CI completed successfully!"
+      
+      - name: Failure Notification
+        if: failure()
+        run: echo "❌ Backend CI failed - check logs above"

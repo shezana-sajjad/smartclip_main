@@ -1,0 +1,100 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/*', 'hotfix/*']
+    paths:
+      - 'smartclips-main/src/**'
+      - 'smartclips-main/public/**'
+      - 'smartclips-main/package.json'
+      - 'smartclips-main/package-lock.json'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'smartclips-main/src/**'
+      - 'smartclips-main/public/**'
+      - 'smartclips-main/package.json'
+      - 'smartclips-main/package-lock.json'
+  workflow_dispatch:
+
+jobs:
+  frontend-build-test:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./smartclips-main
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: 'smartclips-main/package-lock.json'
+      
+      - name: Verify Project Structure
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in frontend directory:"
+          ls -la
+          echo "Package.json exists: $(test -f package.json && echo 'Yes' || echo 'No')"
+          echo "Src directory exists: $(test -d src && echo 'Yes' || echo 'No')"
+      
+      - name: Clean npm cache
+        run: npm cache clean --force
+      
+      - name: Install Dependencies
+        run: npm ci --no-optional --no-fund
+      
+      - name: Run Linter
+        run: npm run lint
+        continue-on-error: false
+      
+      - name: Run Tests
+        run: npm test -- --coverage --watchAll=false --passWithNoTests
+        env:
+          CI: true
+      
+      - name: Build Application
+        run: npm run build
+        env:
+          NODE_ENV: production
+          GENERATE_SOURCEMAP: false
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: frontend-build
+          path: smartclips-main/build/
+          retention-days: 7
+      
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: frontend-test-coverage
+          path: smartclips-main/coverage/
+          retention-days: 7
+      
+      - name: Build Size Check
+        run: |
+          if [ -d "build" ]; then
+            echo "📦 Build size information:"
+            du -sh build/
+            echo "📄 Build files:"
+            find build/ -name "*.js" -o -name "*.css" | head -10
+          fi
+      
+      - name: Success Notification
+        if: success()
+        run: echo "✅ Frontend CI completed successfully!"
+      
+      - name: Failure Notification
+        if: failure()
+        run: echo "❌ Frontend CI failed - check logs above"
