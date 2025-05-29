@@ -8,7 +8,6 @@ on:
       - 'smartclips-main/public/**'
       - 'smartclips-main/package.json'
       - 'smartclips-main/package-lock.json'
-      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [main, develop]
     paths:
@@ -34,8 +33,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18.x'
-          cache: 'npm'
-          cache-dependency-path: 'smartclips-main/package-lock.json'
       
       - name: Verify Project Structure
         run: |
@@ -45,11 +42,10 @@ jobs:
           echo "Package.json exists: $(test -f package.json && echo 'Yes' || echo 'No')"
           echo "Src directory exists: $(test -d src && echo 'Yes' || echo 'No')"
       
-      - name: Clean npm cache
-        run: npm cache clean --force
-      
       - name: Install Dependencies
-        run: npm ci --no-optional --no-fund
+        run: |
+          npm cache clean --force
+          npm install
       
       - name: Run Linter
         run: |
@@ -81,29 +77,13 @@ jobs:
           NODE_ENV: production
           GENERATE_SOURCEMAP: false
       
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: frontend-build
-          path: smartclips-main/build/
-          retention-days: 7
-      
-      - name: Upload Test Coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: frontend-test-coverage
-          path: smartclips-main/coverage/
-          retention-days: 7
-      
       - name: Build Size Check
         run: |
           if [ -d "build" ]; then
             echo "📦 Build size information:"
-            du -sh build/
+            du -sh build/ || echo "Could not determine build size"
             echo "📄 Build files:"
-            find build/ -name "*.js" -o -name "*.css" | head -10
+            find build/ -name "*.js" -o -name "*.css" | head -10 || echo "No JS/CSS files found"
           fi
       
       - name: Success Notification
