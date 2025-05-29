@@ -1,95 +1,40 @@
-name: Frontend CI
+name: Frontend CI/CD
 
 on:
   push:
-    branches: [main, develop, 'feature/*', 'hotfix/*']
     paths:
-      - 'smartclips-main/src/**'
-      - 'smartclips-main/public/**'
-      - 'smartclips-main/package.json'
-      - 'smartclips-main/package-lock.json'
+      - 'src/**'
+      - 'package.json'
+      - 'vite.config.ts'
   pull_request:
-    branches: [main, develop]
     paths:
-      - 'smartclips-main/src/**'
-      - 'smartclips-main/public/**'
-      - 'smartclips-main/package.json'
-      - 'smartclips-main/package-lock.json'
-  workflow_dispatch:
+      - 'src/**'
+      - 'package.json'
+      - 'vite.config.ts'
 
 jobs:
-  frontend-build-test:
+  build-deploy:
     runs-on: ubuntu-latest
-    
-    defaults:
-      run:
-        working-directory: ./smartclips-main
-    
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-      
+        uses: actions/checkout@v3
+
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
-      
-      - name: Verify Project Structure
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Files in frontend directory:"
-          ls -la
-          echo "Package.json exists: $(test -f package.json && echo 'Yes' || echo 'No')"
-          echo "Src directory exists: $(test -d src && echo 'Yes' || echo 'No')"
-      
+          node-version: '18'
+
       - name: Install Dependencies
-        run: |
-          npm cache clean --force
-          npm install
-      
-      - name: Run Linter
-        run: |
-          if npm run | grep -q "lint"; then
-            npm run lint
-          else
-            echo "⚠️ No lint script found, skipping linter"
-          fi
-        continue-on-error: false
-      
-      - name: Run Tests
-        run: |
-          if npm run | grep -q "test"; then
-            npm test -- --coverage --watchAll=false --passWithNoTests
-          else
-            echo "⚠️ No test script found, skipping tests"
-          fi
-        env:
-          CI: true
-      
-      - name: Build Application
-        run: |
-          if npm run | grep -q "build"; then
-            npm run build
-          else
-            echo "⚠️ No build script found, skipping build"
-          fi
-        env:
-          NODE_ENV: production
-          GENERATE_SOURCEMAP: false
-      
-      - name: Build Size Check
-        run: |
-          if [ -d "build" ]; then
-            echo "📦 Build size information:"
-            du -sh build/ || echo "Could not determine build size"
-            echo "📄 Build files:"
-            find build/ -name "*.js" -o -name "*.css" | head -10 || echo "No JS/CSS files found"
-          fi
-      
-      - name: Success Notification
-        if: success()
-        run: echo "✅ Frontend CI completed successfully!"
-      
-      - name: Failure Notification
-        if: failure()
-        run: echo "❌ Frontend CI failed - check logs above"
+        run: npm install
+
+      - name: Build Frontend
+        run: npm run dev --if-present
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
