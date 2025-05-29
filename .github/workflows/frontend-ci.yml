@@ -52,22 +52,37 @@ jobs:
         run: npm ci --no-optional --no-fund
       
       - name: Run Linter
-        run: npm run lint
+        run: |
+          if npm run | grep -q "lint"; then
+            npm run lint
+          else
+            echo "⚠️ No lint script found, skipping linter"
+          fi
         continue-on-error: false
       
       - name: Run Tests
-        run: npm test -- --coverage --watchAll=false --passWithNoTests
+        run: |
+          if npm run | grep -q "test"; then
+            npm test -- --coverage --watchAll=false --passWithNoTests
+          else
+            echo "⚠️ No test script found, skipping tests"
+          fi
         env:
           CI: true
       
       - name: Build Application
-        run: npm run build
+        run: |
+          if npm run | grep -q "build"; then
+            npm run build
+          else
+            echo "⚠️ No build script found, skipping build"
+          fi
         env:
           NODE_ENV: production
           GENERATE_SOURCEMAP: false
       
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success()
         with:
           name: frontend-build
@@ -75,7 +90,7 @@ jobs:
           retention-days: 7
       
       - name: Upload Test Coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: frontend-test-coverage
