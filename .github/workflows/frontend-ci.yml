@@ -1,62 +1,39 @@
-name: Frontend CI
+name: Frontend CI (Vite + React + TS)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   frontend-ci:
     runs-on: ubuntu-latest
 
     steps:
-    - name: ⬇️ Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
 
-    - name: 📦 Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: 🔍 Run ESLint
-      run: |
-        if npm run | grep -q "lint"; then
-          npm run lint
-        else
-          echo "⚠️ Lint script not found in package.json, skipping"
-        fi
+      - name: Lint code (ESLint)
+        run: npm run lint
 
-    - name: ✅ TypeScript type check
-      run: |
-        if npm run | grep -q "type-check"; then
-          npm run type-check
-        else
-          echo "⚠️ type-check script not found, using tsc directly"
-          npx tsc --noEmit
-        fi
+      - name: Format with Prettier (optional)
+        run: |
+          npx prettier --write .
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "chore: prettier format" || echo "No changes to commit"
+          git push origin HEAD:${{ github.head_ref }}
 
-    - name: 🏗️ Build project
-      run: |
-        if npm run | grep -q "build"; then
-          npm run build
-        elif npm run | grep -q "build:prod"; then
-          npm run build:prod
-        elif command -v vite >/dev/null 2>&1; then
-          vite build
-        else
-          echo "❌ No valid build command found"
-          exit 1
-        fi
-
-    - name: 🧪 Run tests
-      run: |
-        if npm run | grep -q "test"; then
-          npm test
-        else
-          echo "⚠️ No test script found, skipping tests"
-        fi
+      - name: Build the project (Vite)
+        run: npm run build
