@@ -9,28 +9,54 @@ on:
 jobs:
   frontend-ci:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
+    - name: ⬇️ Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Node.js
+    - name: 🧰 Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
 
-    - name: Install dependencies
-      run: npm install
+    - name: 📦 Install dependencies
+      run: npm ci
 
-    - name: Run linting
-      run: npm run lint || echo "Lint script not found, skipping"
+    - name: 🔍 Run ESLint
+      run: |
+        if npm run | grep -q "lint"; then
+          npm run lint
+        else
+          echo "⚠️ Lint script not found in package.json, skipping"
+        fi
 
-    - name: Run type check
-      run: npm run type-check || npx tsc --noEmit || echo "TypeScript check completed"
+    - name: ✅ TypeScript type check
+      run: |
+        if npm run | grep -q "type-check"; then
+          npm run type-check
+        else
+          echo "⚠️ type-check script not found, using tsc directly"
+          npx tsc --noEmit
+        fi
 
-    - name: Build project
-      run: npm run build || npm run build:prod || vite build
+    - name: 🏗️ Build project
+      run: |
+        if npm run | grep -q "build"; then
+          npm run build
+        elif npm run | grep -q "build:prod"; then
+          npm run build:prod
+        elif command -v vite >/dev/null 2>&1; then
+          vite build
+        else
+          echo "❌ No valid build command found"
+          exit 1
+        fi
 
-    - name: Run tests
-      run: npm test || npm run test || echo "No tests found, skipping"
+    - name: 🧪 Run tests
+      run: |
+        if npm run | grep -q "test"; then
+          npm test
+        else
+          echo "⚠️ No test script found, skipping tests"
+        fi
