@@ -2,26 +2,40 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'src/**'
       - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '*.config.*'
+      - '*.json'
+      - '*.ts'
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'vite.config.ts'
+      - '.github/workflows/frontend-prod.yml'
+      - 'tailwind.config.ts'
+      - 'postcss.config.js'
+      - 'vercel.json'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'src/**'
       - 'public/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '*.config.*'
+      - '*.json'
+      - '*.ts'
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'vite.config.ts'
+      - '.github/workflows/frontend-prod.yml'
+      - 'tailwind.config.ts'
+      - 'postcss.config.js'
+      - 'vercel.json'
 
 jobs:
-  frontend:
+  build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,23 +43,27 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 18
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
+      - name: Lint
         run: npm run lint
 
-      - name: TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Build project
+      - name: Build for production
         run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
         with:
-          name: build-files
-          path: dist/
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success() 
