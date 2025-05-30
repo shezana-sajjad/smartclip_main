@@ -1,0 +1,29 @@
+# Build output
+dist/
+build/
+
+# Environment and dependency directories
+node_modules/
+env/
+.env/
+.venv/
+
+# Python virtualenv
+**/site-packages/**
+**/python*/**
+
+# Third-party code
+**/vendor/**
+
+# Generated files
+**/*.min.js
+**/*.bundle.js
+
+# Django static files
+**/django/**/static/**
+**/django/**/admin/**
+**/django/**/contrib/**
+
+# Selenium webdriver files
+**/selenium/**
+**/webdriver/** 
