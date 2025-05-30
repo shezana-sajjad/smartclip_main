@@ -152,4 +152,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 Project Origin
 
-This project was originally created with [Lovable](https://lovable.dev/projects/3ba4ae96-5ecb-4089-93a3-66ad5d0c8015).
+This project was originally created with [Lovable](https://lovable.dev/projects/3ba4ae96-5ecb-4089-93a3-66ad5d0c8015)...
